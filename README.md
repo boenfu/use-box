@@ -2,7 +2,7 @@
 
 📦 just a box, nobody use
 
-> 简单的跨组建状态管理
+> 简单的跨组件状态管理
 
 ## Example
 
