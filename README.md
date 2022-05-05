@@ -2,6 +2,8 @@
 
 📦 just a box, nobody use
 
+> 简单的跨组建状态管理
+
 ## Example
 
 ```ts
@@ -35,7 +37,7 @@ const labelBox = createBox(
     },
   },
   {
-    defaultAutoResolveUpdateDependencies: true,
+    autoResolveDependencies: true,
   },
 );
 

@@ -20,7 +20,7 @@ export interface CreateBoxOptions<TState> {
   /**
    * `autoResolveUpdateDependencies` 默认设置
    */
-  defaultAutoResolveUpdateDependencies?: boolean;
+  autoResolveDependencies?: boolean;
   hooks?: BoxHooks<TState>;
 }
 
@@ -37,12 +37,12 @@ export interface UseBoxOptions<TState, TGetters> {
   /**
    * 自动收集使用到的 state，仅第一层
    */
-  autoResolveUpdateDependencies?: boolean;
+  autoResolveDependencies?: boolean;
 }
 
 export interface IBox<TState, TAction> {
   queue: {
-    [key in string]: (current: TState, next: TState) => void;
+    [key in symbol]: (current: TState, next: TState) => void;
   };
   state: TState;
   actions: TAction;
@@ -60,7 +60,7 @@ export function createBox<
   actions: TAction,
   {
     name: boxName,
-    defaultAutoResolveUpdateDependencies,
+    autoResolveDependencies: defaultAutoResolveDependencies,
     hooks: {afterUpdate} = {},
   }: CreateBoxOptions<TState> = {},
 ): {
@@ -127,17 +127,14 @@ export function createBox<
     state: initialState,
     broadcast(current: TState, next: TState) {
       Object.getOwnPropertySymbols(box.queue).forEach(key =>
-        /**
-         * 将 symbol 视作 string, 解决一些不必要的烦恼
-         */
-        box.queue[key as unknown as string]?.(current, next),
+        box.queue[key]?.(current, next),
       );
     },
     useBox<TGetters extends Dict<Getter<TState>>>({
       label = 'setState',
       getters,
       updateDependencies,
-      autoResolveUpdateDependencies = defaultAutoResolveUpdateDependencies,
+      autoResolveDependencies = defaultAutoResolveDependencies,
     }: UseBoxOptions<TState, TGetters> = {}) {
       const gettersValue = useRef<Dict<any>>(
         resolveGetterValues(box.state, getters),
@@ -150,12 +147,12 @@ export function createBox<
       const symbolDescription = boxName ? `${boxName}-${label}` : label;
 
       useEffect(() => {
-        const tag = Symbol(symbolDescription) as unknown as string;
+        const tag = Symbol(symbolDescription);
 
         box.queue[tag] = (current: TState, next: TState) => {
           let checker: (() => boolean)[] = [];
 
-          if (autoResolveUpdateDependencies) {
+          if (autoResolveDependencies) {
             checker.push(() =>
               dependenciesKeys.every(dependenciesKey =>
                 isEqual(
@@ -199,7 +196,7 @@ export function createBox<
       }, []);
 
       return [
-        autoResolveUpdateDependencies
+        autoResolveDependencies
           ? new Proxy(box.state, {
               get(t, k: string) {
                 dependenciesKeys.push(k);
