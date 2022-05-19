@@ -236,7 +236,7 @@ function resolveGetterValues<TState>(
 /////////////
 /// types ///
 /////////////
-interface Dict<T> {
+export interface Dict<T> {
   [K: string]: T;
 }
 
